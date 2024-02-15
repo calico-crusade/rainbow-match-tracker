@@ -3,14 +3,14 @@
 public class MatchesController(
     IDbService _db) : BaseController
 {
-    [HttpGet, Route("api/v1/matches"), ResultsIn<PaginatedResult<RainbowMatch>>]
+    [HttpGet, Route("matches"), ResultsIn<PaginatedResult<RainbowMatch>>]
     public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 20)
     {
         var matches = await _db.Match.Paginate(page, size);
         return DoOk(matches);
     }
 
-    [HttpGet, Route("api/v1/matches/{id}"), ResultsIn<ExtendedMatch>]
+    [HttpGet, Route("matches/{id}"), ResultsIn<ExtendedMatch>]
     public async Task<IActionResult> Get([FromRoute] Guid id)
     {
         var match = await _db.Match.FetchExt(id);
@@ -19,7 +19,7 @@ public class MatchesController(
             : DoOk(match);
     }
 
-    [HttpGet, Route("api/v1/matches/range"), ResultsIn<RainbowMatch[]>]
+    [HttpGet, Route("matches/range"), ResultsIn<RainbowMatch[]>]
     public async Task<IActionResult> Range([FromQuery] DateTime start, [FromQuery] DateTime? end = null)
     {
         var matches = await _db.Match.Range(start, end ?? DateTime.UtcNow.AddDays(14));

@@ -2,21 +2,21 @@
 
 public class LeagueController(IDbService _db) : BaseController
 {
-    [HttpGet, Route("api/v1/leagues/active"), ResultsIn<RainbowLeague[]>]
+    [HttpGet, Route("leagues/active"), ResultsIn<RainbowLeague[]>]
     public async Task<IActionResult> Active()
     {
         var leagues = await _db.League.Active();
         return DoOk(leagues);
     }
 
-    [HttpGet, Route("api/v1/leagues"), ResultsIn<PaginatedResult<RainbowLeague>>]
+    [HttpGet, Route("leagues"), ResultsIn<PaginatedResult<RainbowLeague>>]
     public async Task<IActionResult> Paginate([FromQuery] int page = 1, [FromQuery] int size = 20)
     {
         var leagues = await _db.League.Paginate(page, size);
         return DoOk(leagues);
     }
 
-    [HttpGet, Route("api/v1/leagues/{id}")]
+    [HttpGet, Route("leagues/{id}")]
     [ResultsIn<RainbowLeague>, ResultsInError(404)]
     public async Task<IActionResult> Get(Guid id)
     {
@@ -26,7 +26,7 @@ public class LeagueController(IDbService _db) : BaseController
             : DoOk(league);
     }
 
-    [HttpGet, Route("api/v1/leagues/{id}/matches"), ResultsIn<PaginatedResult<RainbowMatch>>]
+    [HttpGet, Route("leagues/{id}/matches"), ResultsIn<PaginatedResult<RainbowMatch>>]
     public async Task<IActionResult> Matches(Guid id, [FromQuery] int page = 1, [FromQuery] int size = 20)
     {
         var matches = await _db.Match.ByLeague(id, page, size);

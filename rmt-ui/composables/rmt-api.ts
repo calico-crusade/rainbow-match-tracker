@@ -8,7 +8,7 @@ export const useRmtApi = () => {
 
     const DEFAULT_SIZE = 20;
     const url = (section: string, url?: string, version: string = 'v1') => {
-        return `/api/${version}/${section}${url ? `/${url}` : ''}`;
+        return `/${section}${url ? `/${url}` : ''}`;
     }
 
     return {
