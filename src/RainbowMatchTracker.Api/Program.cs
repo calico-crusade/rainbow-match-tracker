@@ -73,8 +73,6 @@ app.UseCors(c =>
      .WithExposedHeaders("Content-Disposition");
 });
 
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();

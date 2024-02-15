@@ -9,6 +9,7 @@ services:
       - Matches:Endpoint=${MATCHES_ENDPOINT}
     ports:
       - ${CONF_PRD_API_PORT}:80
+      - ${CONF_PRD_API_PORT_SSL}:443
   rmt-ui:
     image: ghcr.io/calico-crusade/rainbow-match-tracker/ui:latest
     restart: always

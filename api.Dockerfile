@@ -9,6 +9,8 @@ RUN dotnet publish "./src/RainbowMatchTracker.Api/RainbowMatchTracker.Api.csproj
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build-env /app/out .
+EXPOSE 80
+EXPOSE 443
 ENTRYPOINT ["dotnet", "RainbowMatchTracker.Api.dll"]
 
 # https://docs.docker.com/engine/examples/dotnetcore/
