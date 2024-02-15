@@ -21,7 +21,7 @@
                 <div class="sep margin-left margin-right"></div>
                 <div class="fill flex center-vert">
                     <div class="data">
-                        <Date :value="match.match.startTime" format="r" />
+                        <Date :value="match.match.startTime" format="r" utc />
                         <span>&nbsp;- BO{{ match.match.bestOf }}</span>
                     </div>
                 </div>
