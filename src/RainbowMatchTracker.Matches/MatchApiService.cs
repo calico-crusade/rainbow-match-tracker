@@ -204,7 +204,7 @@ internal class MatchApiService(
     {
         try
         {
-            var imageLinkStr = "//td[@class='match-filler']/div/span/a/img";
+            var imageLinkStr = "//td[@class='match-filler']/div/span/span/a/img";
             var image = document.DocumentNode.SelectSingleNode(imageLinkStr);
 
             var linkStr = "//td[@class='match-filler']/div/div/a";
@@ -244,7 +244,7 @@ internal class MatchApiService(
             Url = AppendLink(document.DocumentNode.SelectSingleNode(start + "/span/span[@class='team-template-text']/a")?.Attributes["href"]?.Value?.Trim()),
             FullName = document.DocumentNode.SelectSingleNode(start + "/span/span[@class='team-template-text']/a")?.Attributes["title"]?.Value?.Replace("(page does not exist)", "")?.Trim(),
             Name = document.DocumentNode.SelectSingleNode(start)?.InnerText?.Trim(),
-            ImageUrl = AppendLink(document.DocumentNode.SelectSingleNode(start + "/span/span[@class='team-template-image']/a/img")?.Attributes["src"]?.Value?.Trim())
+            ImageUrl = AppendLink(document.DocumentNode.SelectSingleNode(start + "/span/span[@class='team-template-image-icon team-template-lightmode']/a/img")?.Attributes["src"]?.Value?.Trim())
         };
     }
 

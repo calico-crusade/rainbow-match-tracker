@@ -1,0 +1,30 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "npx nuxi cleanup && nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/image": "1.2.0",
+    "file-saver": "^2.0.5",
+    "highlight.js": "^11.9.0",
+    "luxon": "^3.4.4",
+    "marked": "^12.0.0",
+    "marked-highlight": "^2.1.1",
+    "nuxt": "^3.10.2",
+    "rxjs": "^7.8.1",
+    "vue": "^3.4.19",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/luxon": "^3.4.2",
+    "@types/marked": "^6.0.0",
+    "sass": "^1.70.0"
+  }
+}

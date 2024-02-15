@@ -8,14 +8,18 @@ public class RainbowMatch : DbObject, IEquatable<RainbowMatch>
 
     public required RainbowMatchTeam[] Teams { get; set; }
 
+    [Column("league_id")]
     public required Guid LeagueId { get; set; }
 
     public required MatchStatus Status { get; set; }
 
+    [Column("start_time")]
     public DateTime StartTime { get; set; }
 
+    [Column("best_of")]
     public int BestOf { get; set; }
 
+    [Column("last_batch_time")]
     public DateTime LastBatchTime { get; set; }
 
     public bool Equals(RainbowMatch? other)

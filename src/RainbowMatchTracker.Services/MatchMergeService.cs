@@ -2,6 +2,8 @@
 
 using Matches;
 using Models;
+using Leagues = Dictionary<string, Models.RainbowLeague>;
+using Teams = Dictionary<string, Models.RainbowTeam>;
 
 public interface IMatchMergeService
 {
@@ -10,14 +12,20 @@ public interface IMatchMergeService
 
 internal class MatchMergeService(
     IDbService _db,
-    IMatchApiService _match) : IMatchMergeService
+    IMatchApiService _match,
+    ILogger<MatchMergeService> _logger) : IMatchMergeService
 {
-    public async Task<RainbowLeague?> GetLeague(LinkItem? item)
+    public async Task<RainbowLeague?> GetLeague(LinkItem? item, Leagues leagues)
     {
         if (item is null ||
             string.IsNullOrEmpty(item.FullName) ||
             string.IsNullOrEmpty(item.Name))
             return null;
+
+        if (leagues.TryGetValue(item.FullName, out var value))
+            return value;
+
+        _logger.LogDebug("Could not find existing League, creating it: {FullName} ({Name})", item.FullName, item.Name);
 
         var league = new RainbowLeague
         {
@@ -27,44 +35,50 @@ internal class MatchMergeService(
             Image = item.ImageUrl,
         };
         league.Id = await _db.League.Upsert(league);
+        leagues.Add(league.Name, league);
         return league;
     }
 
-    public async Task<RainbowTeam?> GetTeam(LinkItem? item)
+    public async Task<RainbowTeam?> GetTeam(LinkItem? item, Teams teams)
     {
         if (item is null ||
             string.IsNullOrEmpty(item.FullName) ||
             string.IsNullOrEmpty(item.Name))
             return null;
 
+        if (teams.TryGetValue(item.FullName, out var value))
+            return value;
+
+        _logger.LogDebug("Could not find existing Team, creating it: {FullName} ({Name})", item.FullName, item.Name);
         var team = new RainbowTeam
         {
             Name = item.FullName,
-            Code = item.Name,
+            Code = item.Name.ToUpper().Trim(),
             Url = item.Url,
             Image = item.ImageUrl,
         };
         team.Id = await _db.Team.Upsert(team);
+        teams.Add(team.Name, team);
         return team;
     }
 
     public static string GetHash(RainbowMatch match)
     {
-        return match.Teams
-            .Select(t => t.Id.ToString()).OrderBy(t => t)
-            .Append(match.LeagueId.ToString())
-            .Append(match.StartTime.ToString("yyyy-MM-dd-HH"))
-            .StrJoin("::")
-            .MD5Hash();
+        var teamIds = match.Teams
+            .Select(t => t.Id.ToString())
+            .OrderBy(t => t)
+            .StrJoin("::");
+
+        return $"{teamIds}::{match.LeagueId}::{match.StartTime:yyyy-MM-dd-HH}".MD5Hash();
     }
 
-    public async Task<RainbowMatch?> GetMatch(Match? match)
+    public async Task<RainbowMatch?> GetMatch(Match? match, Leagues leagues, Teams teams)
     {
         if (match is null) return null;
 
-        var leagueTask = GetLeague(match.League);
-        var teamOneTask = GetTeam(match.TeamOne);
-        var teamTwoTask = GetTeam(match.TeamTwo);
+        var leagueTask = GetLeague(match.League, leagues);
+        var teamOneTask = GetTeam(match.TeamOne, teams);
+        var teamTwoTask = GetTeam(match.TeamTwo, teams);
 
         await Task.WhenAll(leagueTask, teamOneTask, teamTwoTask);
 
@@ -88,7 +102,7 @@ internal class MatchMergeService(
         return rainbowMatch;
     }
 
-    public bool ExactMatch(RainbowMatch one, RainbowMatch two)
+    public static bool ExactMatch(RainbowMatch one, RainbowMatch two)
     {
         return one.Hash == two.Hash &&
             one.StartTime == two.StartTime &&
@@ -108,31 +122,53 @@ internal class MatchMergeService(
 
     public async IAsyncEnumerable<Joined> GetJoinedMatches()
     {
-        var lastBatch = (await _db.Match.LastBatch()).ToDictionary(t => t.Hash);
+        var (lastBatchMatches, leaguesBatch, teamsBatch) = await _db.Match.LastBatch();
+        var lastBatch = lastBatchMatches.ToDictionary(m => m.Hash);
+        var leagues = leaguesBatch.ToDictionary(l => l.Name);
+        var teams = teamsBatch.ToDictionary(t => t.Name);
 
-        await foreach(var match in GetMatches())
+        _logger.LogDebug("Starting with {lastBatch} matches, {leagues} leagues, and {teams} teams", lastBatch.Count, leagues.Count, teams.Count);
+        await foreach(var match in GetMatches(leagues, teams))
         {
             if (!lastBatch.TryGetValue(match.Hash, out var last))
             {
+                _logger.LogDebug("Could not find last match for {Hash}, taking left.", match.Hash);
                 yield return new(match, null);
                 continue;
             }
 
             lastBatch.Remove(match.Hash);
-            if (!ExactMatch(match, last))
-                yield return new(match, last);
+            if (ExactMatch(match, last))
+            {
+                _logger.LogDebug("Match hash is the same, skipping. {Hash}", match.Hash);
+                continue;
+            }
+                
+            yield return new(match, last);
+            _logger.LogDebug("Differences found: \r\n" +
+                "{oneHash} = {twoHash}\r\n" +
+                "{oneStart} = {twoStart}\r\n" +
+                "{oneBestOf} = {twoBestOf}\r\n" +
+                "{oneStatus} = {twoStatus}",
+                match.Hash, last.Hash,
+                match.StartTime, last.StartTime,
+                match.BestOf, last.BestOf,
+                match.Status, last.Status);
         }
 
         foreach (var match in lastBatch.Values)
+        {
+            _logger.LogDebug("Could not find new match for {Hash}, taking right.", match.Hash);
             yield return new(null, match);
+        }
     }
 
-    public async IAsyncEnumerable<RainbowMatch> GetMatches()
+    public async IAsyncEnumerable<RainbowMatch> GetMatches(Leagues leagues, Teams teams)
     {
-        var matches = _match.Matches();
-        await foreach (var match in matches)
+        var matches = await _match.Matches().ToArrayAsync();
+        foreach (var match in matches)
         {
-            var rainbowMatch = await GetMatch(match);
+            var rainbowMatch = await GetMatch(match, leagues, teams);
             if (rainbowMatch is not null)
                 yield return rainbowMatch;
         }
@@ -167,35 +203,6 @@ internal class MatchMergeService(
                     ? MergeStatus.Removed
                     : MergeStatus.Updated);
         }
-
-        //var newMatches = newBatch.Except(lastBatch);
-        //var handled = new List<string>();
-        //foreach (var match in newMatches)
-        //{
-        //    yield return await Upsert(match, batchTime, MergeStatus.New);
-        //    handled.Add(match.Hash);
-        //}
-
-        //var removedMatches = lastBatch.Except(newBatch);
-        //foreach (var match in removedMatches)
-        //{
-        //    yield return await Upsert(match, batchTime,
-        //        match.Status == MatchStatus.Upcoming 
-        //            ? MergeStatus.Removed
-        //            : MergeStatus.Updated);
-        //    handled.Add(match.Hash);    
-        //}
-
-        //var all = newBatch.Concat(lastBatch);
-        //foreach (var match in all)
-        //{
-        //    if (handled.Contains(match.Hash)) continue;
-
-        //    match.LastBatchTime = batchTime;
-        //    match.Id = await _db.Match.Upsert(match);
-        //    yield return new(match, MergeStatus.Updated);
-        //    handled.Add(match.Hash);
-        //}
     }
 }
 

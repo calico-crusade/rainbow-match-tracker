@@ -7,3 +7,4 @@ global using Microsoft.Net.Http.Headers;
 global using System.Security.Claims;
 
 global using RainbowMatchTracker.Api.Middleware;
+global using RainbowMatchTracker.Models;

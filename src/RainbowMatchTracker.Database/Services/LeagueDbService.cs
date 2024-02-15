@@ -4,43 +4,22 @@ using Models;
 
 public interface ILeagueDbService : IOrmMap<RainbowLeague>
 {
-    Task<RainbowLeague[]> Upsert(RainbowLeague[] leagues);
+    Task<RainbowLeague[]> Active();
 }
 
 internal class LeagueDbService(IOrmService _orm) : Orm<RainbowLeague>(_orm), ILeagueDbService
 {
-    public Task<RainbowLeague[]> Upsert(RainbowLeague[] leagues)
+    public Task<RainbowLeague[]> Active()
     {
-        const string QUERY = @"WITH new_league AS (
-    SELECT
-         a.Name as name,
-         a.Display as display,
-         a.Url as url,
-         a.Image as image,
-         a.DeletedAt as deleted_at
-    FROM unnest(:Updates) a
-), updated AS (
-    INSERT INTO rainbow_league (name, display, url, image, deleted_at)
-    SELECT
-        a.name,
-        a.display,
-        a.url,
-        a.image,
-        a.deleted_at
-    FROM new_league a
-    ON CONFLICT  (name, display)
-    DO UPDATE SET
-        name = a.name,
-        display = a.display,
-        url = a.url,
-        image = a.image,
-        updated_at = CURRENT_TIMESTAMP,
-        deleted_at = a.deleted_at
-    RETURNING id
-)
-SELECT a.*
-FROM rainbow_league a
-JOIN updated b ON b.id = a.id";
-        return Get(QUERY, new { Updates = leagues });
+        const string QUERY = @"SELECT
+    DISTINCT l.*
+FROM rainbow_league l
+JOIN rainbow_match m ON l.id = m.league_id
+WHERE
+    m.status IN (4, 5) AND
+    l.deleted_at IS NULL AND
+    m.deleted_at IS NULL;";
+
+        return Get(QUERY);
     }
 }

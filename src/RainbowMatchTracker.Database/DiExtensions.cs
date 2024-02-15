@@ -15,6 +15,9 @@ public static class  DiExtensions
 
             .Transient<IDbService, DbService>()
             
+            .Model<RainbowLeague>()
+            .Model<RainbowTeam>()
+            .Model<RainbowMatch>()
             .Type<RainbowMatchTeam>("rainbow_match_team");
     }
 }
