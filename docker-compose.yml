@@ -1,0 +1,21 @@
+version: '3.3'
+services:
+  rmt-api:
+    image: ghcr.io/calico-crusade/rainbow-match-tracker/api:latest
+    restart: always
+    environment:
+      - Database:ConnectionString=User ID=${POSTGRES_USER};Password=${POSTGRES_PASS};Host=${LOCAL_IP}:${POSTGRES_PORT};Database=${POSTGRES_HOST};
+      - Matches:Url=${MATCHES_URL}
+      - Matches:Endpoint=${MATCHES_ENDPOINT}
+    ports:
+      - ${CONF_PRD_API_PORT}:80
+  rmt-ui:
+    image: ghcr.io/calico-crusade/rainbow-match-tracker/ui:latest
+    restart: always
+    environment:
+      - NUXT_PUBLIC_ENV=prd
+      - NUXT_PUBLIC_API_URL=https://tracker-api.${DOMAIN}
+    ports:
+      - ${CONF_PRD_UI_PORT}:3000
+    depends_on:
+      - rmt-api

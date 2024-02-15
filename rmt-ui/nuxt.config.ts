@@ -31,7 +31,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             env: 'prd',
-            apiUrl: 'https://localhost:7167'
+            apiUrl: 'https://rmt-api.championsforge.pro'
         }
     },
 

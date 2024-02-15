@@ -397,3 +397,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /src/RainbowMatchTracker.Api/Properties/launchSettings.json
+.env
