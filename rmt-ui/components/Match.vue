@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { type ExtendedMatch, type Match, type booleanish, type ClassOptions, MatchStatus, type Team } from '~/models';
 
-const { check } = useApiHelper();
+const { toPromise } = useApiHelper();
 const { serClasses, isTrue, isExternal } = useUtils();
 const { v1: api } = useRmtApi();
 
@@ -144,7 +144,6 @@ const actLink = computed(() => {
 });
 
 const marry = async () => {
-    if (!process.client) return;
 
     if (props.match && 'match' in props.match) {
         match.value = props.match;
@@ -157,9 +156,10 @@ const marry = async () => {
         (match.value && match.value.match.id === id))
         return;
 
+    if (!process.client) return;
+
     loading.value = true;
-    const { data } = check(await api.matches.get(id));
-    match.value = data;
+    match.value = (await toPromise(api.matches.get(id)))?.data;
     loading.value = false;
 }
 

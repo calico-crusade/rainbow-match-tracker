@@ -353,6 +353,20 @@ export const useUtils = () => {
         return uri;
     }
 
+    const setMeta = (title?: string, description?: string, image?: string) => {
+        description ??= 'R6 Match Tracker - Keep tabs on how your favourite teams are doing!';
+        title ??= 'R6 Match Tracker';
+        image ??= '/logos/logo.png';
+
+        useSeoMeta({
+            title,
+            ogTitle: title,
+            description,
+            ogDescription: description,
+            ogImageUrl: image
+        });
+    }
+
     return {
         debounce,
         throttle,
@@ -378,6 +392,7 @@ export const useUtils = () => {
         writeToClipboard,
         baseUrl,
         trigger,
-        proxy
+        proxy,
+        setMeta
     }
 }

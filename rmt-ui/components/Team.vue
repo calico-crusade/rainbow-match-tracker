@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import type { Team, booleanish, ClassOptions } from '~/models';
 
-const { check } = useApiHelper();
+const { toPromise } = useApiHelper();
 const { serClasses, isTrue, isExternal } = useUtils();
 const { v1: api } = useRmtApi();
 
@@ -70,7 +70,6 @@ const actLink = computed(() => {
 });
 
 const marry = async () => {
-    if (!process.client) return;
 
     if (props.team) {
         data.value = props.team;
@@ -81,9 +80,10 @@ const marry = async () => {
         (data.value && data.value.id === props.id))
         return;
 
+    if (!process.client) return;
+
     loading.value = true;
-    const { data: team } = check(await api.teams.get(props.id));
-    data.value = team;
+    data.value = (await toPromise(api.teams.get(props.id)))?.data;
     loading.value = false;
 }
 

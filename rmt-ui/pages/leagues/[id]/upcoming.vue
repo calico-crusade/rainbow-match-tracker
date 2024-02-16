@@ -1,7 +1,7 @@
 <template>
     <Container
-        :loading="pending"
-        :error="error?.message ?? error?.toString()"
+        :loading="loading"
+        :error="err?.message ?? err?.toString()"
         scroll-y
         class="flex row"
         no-heading-backing
@@ -10,7 +10,7 @@
             <h3 class="fill center-vert margin-left">Upcoming Matches</h3>
         </template>
         <template #header>
-            <League :id="id" class="fill fill-bg">
+            <League :league="league" class="fill fill-bg">
                 <IconBtn
                     icon="sync"
                     @click="refresh"
@@ -58,12 +58,21 @@
 
 <script setup lang="ts">
 const { v1: api } = useRmtApi();
+const { setMeta } = useUtils();
 const route = useRoute();
 
 const id = computed(() => route.params.id?.toString());
 const { data, pending, error, refresh } = await api.leagues.matches.active(id.value);
+const { data: leagueData, pending: leaguePending, error: leagueError } = await api.leagues.get(id.value);
+
+const league = computed(() => leagueData.value?.data);
+const loading = computed(() => pending.value || leaguePending.value);
+const err = computed(() => error.value ?? leagueError.value);
 
 const matches = computed(() => data.value?.data ?? []);
+const title = computed(() => `${league.value?.display ?? 'League'} - Upcoming Matches`);
+
+setMeta(title.value, league.value?.name ?? 'Upcoming matches for the league', league.value?.image);
 </script>
 
 <style lang="scss" scoped>

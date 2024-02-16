@@ -136,6 +136,7 @@ export const useApiHelper = () => {
                 context,
                 data: data.value,
                 error: error.value,
+                result: {...result},
                 msg
             })
             return { error: msg, data: undefined };
