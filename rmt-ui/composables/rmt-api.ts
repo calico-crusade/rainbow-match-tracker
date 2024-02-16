@@ -17,7 +17,11 @@ export const useRmtApi = () => {
                 active: () => get<League[]>(url('leagues', 'active')),
                 all: (page: RefNumber, size: RefNumber = DEFAULT_SIZE) => get<PaginatedResult<League>>(url('leagues'), { page, size }),
                 get: (id: string) => get<League>(url('leagues', id)),
-                matches: (id: string, page: RefNumber, size: RefNumber = DEFAULT_SIZE) => get<PaginatedResult<Match>>(url('leagues', `${id}/matches`), { page, size }),
+                matches: {
+                    all: (id: string, page: RefNumber, size: RefNumber = DEFAULT_SIZE) => get<PaginatedResult<Match>>(url('leagues', `${id}/matches`), { page, size }),
+                    active: (id: string) => get<Match[]>(url('leagues', `${id}/matches/active`)),
+                    finished: (id: string, page: RefNumber, size: RefNumber = DEFAULT_SIZE) => get<PaginatedResult<Match>>(url('leagues', `${id}/matches/finished`), { page, size }),
+                }
             },
             matches: {
                 all: (page: RefNumber, size: RefNumber = DEFAULT_SIZE) => get<PaginatedResult<Match>>(url('matches'), { page, size }),

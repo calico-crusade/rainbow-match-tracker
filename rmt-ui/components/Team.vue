@@ -7,7 +7,7 @@
         :target="isExternal(actLink) ? '_blank' : undefined"
     >
         <div class="image">
-            <Image v-if="data" :src="data.image" :alt="data.name" size="50px" fit="contain" />
+            <Image shadow v-if="data" :src="data.image" :alt="data.name" size="50px" fit="contain" />
             <Placeholder v-else size="50px" round="50%" />
         </div>
 

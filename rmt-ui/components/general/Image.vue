@@ -30,11 +30,13 @@ const props = defineProps<{
     height?: string | number;
     size?: string | number;
     fit?: string;
+    shadow?: booleanish;
 }>();
 
 const classes = computed(() => serClasses(props.class, {
     'round': isTrue(props.round),
-    'rounded': isTrue(props.rounded)
+    'rounded': isTrue(props.rounded),
+    'shadow': isTrue(props.shadow)
 }));
 
 const styles = computed(() => serStyles(props.style, {
@@ -60,4 +62,7 @@ const massageUrl = (url?: string) => {
 <style lang="scss" scoped>
 .round { border-radius: 50%; }
 .rounded { border-radius: var(--brd-radius); }
+.shadow {
+    filter: drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white);
+}
 </style>

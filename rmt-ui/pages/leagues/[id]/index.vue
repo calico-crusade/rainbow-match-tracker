@@ -19,6 +19,33 @@
             </League>
         </template>
 
+        <div class="flex margin-top">
+            <IconBtn
+                class="pad-left"
+                color="shade"
+                icon="calendar_today"
+                text="Upcoming"
+                active="primary"
+                :link="`/leagues/${id}/upcoming`"
+            />
+            <IconBtn
+                color="shade"
+                class="margin-left"
+                icon="calendar_today"
+                text="Finished"
+                active="primary"
+                :link="`/leagues/${id}/finished`"
+            />
+            <IconBtn
+                color="shade"
+                class="margin-left"
+                icon="history"
+                text="All"
+                active="primary"
+                :link="`/leagues/${id}`"
+            />
+        </div>
+
         <Match
             v-for="match in matches"
             :key="match.id"
@@ -44,7 +71,7 @@ const route = useRoute();
 const id = computed(() => route.params.id?.toString());
 const page = computed(() => +(route.query.page?.toString() ?? '1'));
 const size = computed(() => +(route.query.size?.toString() ?? '10'));
-const { data, pending, error, refresh } = await api.leagues.matches(id.value, page, size);
+const { data, pending, error, refresh } = await api.leagues.matches.all(id.value, page, size);
 
 const matches = computed(() => data.value?.data.results ?? []);
 const total = computed(() => data.value?.data.count ?? 0);

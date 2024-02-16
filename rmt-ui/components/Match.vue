@@ -6,7 +6,7 @@
         :to="actLink"
         :target="isExternal(actLink) ? '_blank' : undefined"
     >
-        <Placeholder v-if="loading || !match" height="100px" width="100%" round="var(--brd-radius)" />
+        <Placeholder v-if="loading || !match" height="85px" width="100%" round="var(--brd-radius)" />
         <template v-else-if="!isCompact">
             <div class="match-details flex">
                 <div class="fill flex center-vert">
@@ -16,7 +16,7 @@
                     >
                         <span>{{ match.league.display }}</span>
                     </NuxtLink>
-                    <Image class="margin-left" :src="match.league.image" :alt="match.league.display" size="25px" fit="contain" />
+                    <Image class="margin-left" shadow :src="match.league.image" :alt="match.league.display" size="25px" fit="contain" />
                 </div>
                 <div class="sep margin-left margin-right"></div>
                 <div class="fill flex center-vert">
@@ -27,21 +27,21 @@
                 </div>
             </div>
             <div class="team-details flex">
-                <template v-for="(team, index) in match.teams">
+                <template v-for="(team, index) in teams">
                     <NuxtLink
                         class="team flex center-vert"
                         :class="{
                             'left': index % 2 === 0,
                             'right': index % 2 !== 0,
-                            'won': match.match.status === (index % 2 === 0 ? MatchStatus.TeamOneWon : MatchStatus.TeamTwoWon),
-                            'lost': match.match.status === (index % 2 === 0 ? MatchStatus.TeamTwoWon : MatchStatus.TeamOneWon),
-                            'draw': match.match.status === MatchStatus.Draw,
-                            'active': match.match.status === MatchStatus.Active,
+                            'won': team.type === 'won',
+                            'lost': team.type === 'lost',
+                            'draw': team.type === 'draw',
+                            'active': team.type === 'active',
                         }"
                         :to="`/teams/${team.id}`"
                     >
                         <div class="background" />
-                        <Image :src="team.image" :alt="team.name" size="50px" fit="contain" />
+                        <Image :src="team.image" :alt="team.name" size="50px" fit="contain" shadow />
                         <h3 class="center-vert name">{{ team.name }}</h3>
                         <p class="center-vert code">{{ team.code }}</p>
                     </NuxtLink>
@@ -59,7 +59,7 @@
                         <span
                             class="text"
                             v-else>
-                            {{ match.match.teams[0].score }}:{{ match.match.teams[1].score }}
+                            {{ teams[0].score }}:{{ teams[1].score }}
                         </span>
                     </div>
                 </template>
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { type ExtendedMatch, type Match, type booleanish, type ClassOptions, MatchStatus } from '~/models';
+import { type ExtendedMatch, type Match, type booleanish, type ClassOptions, MatchStatus, type Team } from '~/models';
 
 const { check } = useApiHelper();
 const { serClasses, isTrue, isExternal } = useUtils();
@@ -97,6 +97,33 @@ const emit = defineEmits<{
 const loading = ref(false);
 const match = ref<ExtendedMatch>();
 const isCompact = computed(() => isTrue(props.compact));
+
+const teams = computed(() => {
+    if (!match.value) return [];
+
+    const [team1, team2] = match.value.teams;
+    const scores = match.value.match.teams;
+
+    const status = match.value.match.status;
+    const determineType = (team: Team) => {
+        const score = scores.find(t => t.id === team.id)?.score ?? 0;
+        const other = scores.find(t => t.id !== team.id)?.score ?? 0;
+
+        switch(status) {
+            case MatchStatus.TeamTwoWon:
+            case MatchStatus.TeamOneWon: return { type: score > other ? 'won' : 'lost', score };
+            case MatchStatus.Draw: return { type: 'draw', score };
+            case MatchStatus.Active: return { type: 'active', score };
+            case MatchStatus.Upcoming: return { type: 'upcoming', score };
+            case MatchStatus.Unknown: return { type: 'unknown', score };
+        }
+    }
+
+    return [
+        { ...team1, ...determineType(team1) },
+        { ...team2, ...determineType(team2) },
+    ];
+});
 
 const classes = computed(() => serClasses(props.class, {
     'margin-top': !isTrue(props.noTopMargin),
@@ -177,7 +204,6 @@ watch(() => props, () => marry(), { immediate: true, deep: true });
             img {
                 margin-left: 5px;
                 margin-right: 5px;
-                filter: drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white);
             }
 
             .code {

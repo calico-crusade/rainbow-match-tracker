@@ -6,19 +6,28 @@ public interface IMatchDbService : IOrmMap<RainbowMatch>
 {
     Task<(RainbowMatch[], RainbowLeague[], RainbowTeam[])> LastBatch();
 
-    Task<PaginatedResult<RainbowMatch>> ByLeague(Guid leagueId, int page, int size);
+    Task<PaginatedResult<RainbowMatch>> ByLeague(Guid leagueId, int page, int size, params MatchStatus[] status);
 
     Task<PaginatedResult<RainbowMatch>> ByTeam(Guid teamId, int page, int size);
 
     Task<ExtendedMatch?> FetchExt(Guid id);
 
     Task<RainbowMatch[]> Range(DateTime start, DateTime end);
+
+    Task<RainbowMatch[]> ActiveByLeague(Guid leagueId);
 }
 
 internal class MatchDbService(IOrmService _orm) : Orm<RainbowMatch>(_orm), IMatchDbService
 {
-    private static string? _byLeague;
     private static string? _allMatches;
+    private static MatchStatus[] ALL_STATUS = [
+        MatchStatus.TeamOneWon,
+        MatchStatus.TeamTwoWon,
+        MatchStatus.Draw,
+        MatchStatus.Active,
+        MatchStatus.Upcoming,
+        MatchStatus.Unknown
+    ];
 
     public override Task<PaginatedResult<RainbowMatch>> Paginate(int page = 1, int size = 100)
     {
@@ -52,12 +61,6 @@ WHERE t.deleted_at IS NULL;";
         var leagues = (await rdr.ReadAsync<RainbowLeague>()).ToArray();
         var teams = (await rdr.ReadAsync<RainbowTeam>()).ToArray();
         return (matches, leagues, teams);
-    }
-
-    public Task<PaginatedResult<RainbowMatch>> ByLeague(Guid leagueId, int page, int size)
-    {
-        _byLeague ??= Map.Paginate(t => t.StartTime, false, t => t.With(a => a.LeagueId));
-        return Paginate(_byLeague, new { LeagueId = leagueId }, page, size);
     }
 
     public Task<PaginatedResult<RainbowMatch>> ByTeam(Guid teamId, int page, int size)
@@ -140,5 +143,42 @@ WHERE
     start_time BETWEEN :start AND :end AND
     deleted_at IS NULL;";
         return Get(QUERY, new { start, end });
+    }
+
+    public Task<RainbowMatch[]> ActiveByLeague(Guid leagueId)
+    {
+        const string QUERY = @"SELECT * 
+FROM rainbow_match
+WHERE 
+    league_id = :leagueId AND
+    status IN (4, 5) AND
+    deleted_at IS NULL
+ORDER BY start_time ASC";
+        return Get(QUERY, new { leagueId });
+    }
+
+    public Task<PaginatedResult<RainbowMatch>> ByLeague(Guid leagueId, int page, int size, params MatchStatus[] status)
+    {
+        const string QUERY = @"
+SELECT * 
+FROM rainbow_match
+WHERE 
+    league_id = :leagueId AND 
+    deleted_at IS NULL AND
+    status = ANY(:statuses)
+ORDER BY start_time DESC 
+LIMIT :limit 
+OFFSET :offset; 
+
+SELECT COUNT(*) 
+FROM rainbow_match
+WHERE  
+    league_id = :leagueId AND 
+    deleted_at IS NULL AND
+    status = ANY(:statuses);";
+
+        var statuses = (status.Length == 0 ? ALL_STATUS : status).Select(t => (int)t).ToArray();
+
+        return Paginate(QUERY, new { leagueId, statuses }, page, size);
     }
 }
