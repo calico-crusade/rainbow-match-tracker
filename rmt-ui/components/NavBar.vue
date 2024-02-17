@@ -18,9 +18,9 @@
         </section>
 
         <section class="links flex row">
-            <IconBtn icon="person" text="Teams" link="/teams" />
-            <IconBtn icon="groups" text="Leagues" link="/leagues" />
-            <IconBtn icon="sports_esports" text="Matches" link="/matches" />
+            <IconBtn icon="person" text="Teams" link="/teams" @click="toggle" />
+            <IconBtn icon="groups" text="Leagues" link="/leagues" @click="toggle" />
+            <IconBtn icon="sports_esports" text="Matches" link="/matches" @click="toggle" />
         </section>
 
         <span class="fill" />

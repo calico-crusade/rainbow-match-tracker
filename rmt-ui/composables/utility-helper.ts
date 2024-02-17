@@ -5,6 +5,15 @@ export const useUtils = () => {
 
     const trigger = useState<boolean>('ui-refresh-trigger', () => false);
 
+    (() => {
+        if (!process.client || (window && 'watcherTimer' in window)) return;
+
+        (<any>window).watcherTimer = setInterval(async () => {
+            trigger.value = !trigger.value;
+        }, 1000);
+    })();
+
+
     /**
      * Stop a function from being called too often
      * @param fun The function that should be called
@@ -308,6 +317,11 @@ export const useUtils = () => {
         return value === '' || !!value;
     }
 
+    /**
+     * Serializes the given style options into a valid style string
+     * @param style the style options
+     * @returns the valid style string
+     */
     const serStyle = (style: StyleOptions) => {
         if (style === undefined || style === null) return '';
         if (typeof style === 'string') return style;
@@ -319,31 +333,49 @@ export const useUtils = () => {
             .join('; ');
     };
 
+    /**
+     * Serializes all of the given style options into a valid style string
+     * @param styles The style options
+     * @returns The valid style string
+     */
     const serStyles = (...styles: StyleOptions[]): string => {
         return styles.map(serStyle).join('; ');
     }
 
+    /**
+     * Calculates the scroll percentage of the given scroller
+     * @param scroller The element that was scrolled
+     * @returns The scroll percentage
+     */
     const scrollPercent = (scroller: HTMLElement) => {
         if (scroller.scrollHeight == scroller.clientHeight) return 100;
         return Math.floor(scroller.scrollTop / (scroller.scrollHeight - scroller.clientHeight) * 100);
     };
 
+    /**
+     * Writes the given text to the clipboard
+     * @param text The text to write
+     * @returns The promise that resolves when the text has been written to the clipboard
+     */
     const writeToClipboard = (text: string) => {
         return navigator.clipboard.writeText(text);
     }
 
+    /**
+     * Gets the current site's base URL
+     * @returns The current site's base URL
+     */
     const baseUrl = () => {
         return `${window.location.protocol}//${window.location.host}`;
     }
 
-    (() => {
-        if (!process.client || (window && 'rmtWatcherTimer' in window)) return;
-
-        (<any>window).rmtWatcherTimer = setInterval(async () => {
-            trigger.value = !trigger.value;
-        }, 1000);
-    })();
-
+    /**
+     * Proxies the given image URL
+     * @param url the URL to proxy
+     * @param group the type of proxy to use
+     * @param referer the optional referer to use
+     * @returns the proxied URL
+     */
     const proxy = (url: string, group: string = 'r6mt', referer?: string) => {
         const path = encodeURIComponent(url);
         let uri = `https://cba-proxy.index-0.com/proxy?path=${path}&group=${group}`;
@@ -353,6 +385,12 @@ export const useUtils = () => {
         return uri;
     }
 
+    /**
+     * Sets the SEO meta data for the given information
+     * @param title The title of the page
+     * @param description The description of the page
+     * @param image The image to use
+     */
     const setMeta = (title?: string, description?: string, image?: string) => {
         description ??= 'R6 Match Tracker - Keep tabs on how your favourite teams are doing!';
         title ??= 'R6 Match Tracker';
@@ -365,6 +403,36 @@ export const useUtils = () => {
             ogDescription: description,
             ogImageUrl: image
         });
+    }
+
+    /**
+     * Combines the given values into a human readable string
+     * @param values The values to combine
+     * @returns The concatenated string
+     */
+    function humanJoin(values: string[]): string;
+    /**
+     * Combines the given values into a human readable string
+     * @param values The values to combine
+     * @returns The concatenated string
+     */
+    function humanJoin(...values: string[]): string;
+    /**
+     * Combines the given values into a human readable string
+     * @param value The values to combine
+     * @param values The values to combine
+     * @returns The concatenated string
+     */
+    function humanJoin(value: string | string[], ...values: string[]) {
+        let all = [
+            ...(Array.isArray(value) ? value : [value]),
+            ...values
+        ];
+
+        if (all.length === 0) return '';
+        if (all.length === 1) return all[0];
+
+        return `${all.slice(0, -1).join(', ')} and ${all[all.length - 1]}`;
     }
 
     return {
@@ -393,6 +461,7 @@ export const useUtils = () => {
         baseUrl,
         trigger,
         proxy,
-        setMeta
+        setMeta,
+        humanJoin
     }
 }

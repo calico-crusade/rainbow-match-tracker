@@ -69,7 +69,7 @@ import type { MatchSearch, MatchStatus } from '~/models';
 
 const { v1: api } = useRmtApi();
 const route = useRoute();
-const { setMeta } = useUtils();
+const { setMeta, humanJoin } = useUtils();
 
 const id = computed(() => route.params.id?.toString());
 const codes = computed(() => route.query.codes?.toString().split(',') ?? []);
@@ -88,29 +88,8 @@ const league = computed(() => leagueData.value?.data);
 const matches = computed(() => data.value?.data ?? []);
 const loading = computed(() => pending.value || leaguePending.value);
 const err = computed(() => error.value ?? leagueError.value);
-const codeDisplay = computed(() => {
-    const values = codes.value.map(c => c.toUpperCase());
+const codeDisplay = computed(() => humanJoin(codes.value.map(c => c.toUpperCase())));
 
-    if (values.length === 0) return 'Unknown';
-    if (values.length === 1) return values[0];
-
-    let output = '';
-    for (let i = 0; i < values.length; i++) {
-        output += values[i];
-        if (i < values.length - 2) {
-            output += ', ';
-            continue;
-        }
-
-        if (i === values.length - 2) {
-            output += ' and ';
-            continue;
-        }
-    }
-    return output;
-});
+setMeta(`${codeDisplay.value}'s Matches`);
 </script>
 
-<style lang="scss" scoped>
-
-</style>
