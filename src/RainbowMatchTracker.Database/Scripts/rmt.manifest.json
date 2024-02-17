@@ -5,6 +5,8 @@
     "Tables/rainbow_league.sql",
     "Tables/rainbow_team.sql",
     "Types/rainbow_match_team.sql",
-    "Tables/rainbow_match.sql"
+    "Tables/rainbow_match.sql",
+
+    "Views/rainbow_match_teams.sql"
   ]
 }

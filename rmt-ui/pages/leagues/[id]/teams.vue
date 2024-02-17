@@ -8,7 +8,7 @@
         <template #header>
             <Image :src="league?.image" size="24px" class="center-vert margin-left" shadow />
             <h3 class="center-vert margin">{{ league?.display }} </h3>
-            <h3 class="center-vert mute">Upcoming Matches</h3>
+            <h3 class="center-vert mute">{{ codeDisplay }}'s Matches</h3>
             <IconBtn
                 icon="sync"
                 @click="refresh"
@@ -52,10 +52,6 @@
                     :link="`/leagues/${id}`"
                 />
             </div>
-
-            <div class="pager mute center-vert pad-left">
-                {{ matches.length }} Upcoming Matches
-            </div>
         </div>
 
         <Match
@@ -69,26 +65,52 @@
 </template>
 
 <script setup lang="ts">
+import type { MatchSearch, MatchStatus } from '~/models';
+
 const { v1: api } = useRmtApi();
-const { setMeta } = useUtils();
 const route = useRoute();
+const { setMeta } = useUtils();
 
 const id = computed(() => route.params.id?.toString());
-const { data, pending, error, refresh } = await api.leagues.matches.active(id.value);
+const codes = computed(() => route.query.codes?.toString().split(',') ?? []);
+const ids = computed(() => route.query.ids?.toString().split(',') ?? []);
+const statuses = computed(() => route.query.statuses?.toString().split(',').map(t => <MatchStatus>Number(t)) ?? []);
+const search = computed(() => <MatchSearch>{
+    league: id.value,
+    codes: codes.value,
+    ids: ids.value,
+    statuses: statuses.value
+});
+const { data, pending, error, refresh } = await api.matches.search(search.value);
 const { data: leagueData, pending: leaguePending, error: leagueError } = await api.leagues.get(id.value);
 
 const league = computed(() => leagueData.value?.data);
+const matches = computed(() => data.value?.data ?? []);
 const loading = computed(() => pending.value || leaguePending.value);
 const err = computed(() => error.value ?? leagueError.value);
+const codeDisplay = computed(() => {
+    const values = codes.value.map(c => c.toUpperCase());
 
-const matches = computed(() => data.value?.data ?? []);
-const title = computed(() => `${league.value?.display ?? 'League'} - Upcoming Matches`);
+    if (values.length === 0) return 'Unknown';
+    if (values.length === 1) return values[0];
 
-setMeta(title.value, league.value?.name ?? 'Upcoming matches for the league', league.value?.image);
+    let output = '';
+    for (let i = 0; i < values.length; i++) {
+        output += values[i];
+        if (i < values.length - 2) {
+            output += ', ';
+            continue;
+        }
+
+        if (i === values.length - 2) {
+            output += ' and ';
+            continue;
+        }
+    }
+    return output;
+});
 </script>
 
 <style lang="scss" scoped>
-.fill-bg {
-    background-color: var(--bg-color-accent-dark);
-}
+
 </style>

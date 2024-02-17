@@ -29,7 +29,6 @@
 
         <Pager
             :page="page"
-            :size="size"
             :total="total"
             :pages="pages"
             :url="`/teams/${id}`"
@@ -44,8 +43,7 @@ const { setMeta } = useUtils();
 
 const id = computed(() => route.params.id?.toString());
 const page = computed(() => +(route.query.page?.toString() ?? '1'));
-const size = computed(() => +(route.query.size?.toString() ?? '10'));
-const { data, pending, error, refresh } = await api.teams.matches(id.value, page, size);
+const { data, pending, error, refresh } = await api.teams.matches(id.value, page);
 const { data: teamData, pending: teamPending, error: teamError } = await api.teams.get(id.value);
 
 const team = computed(() => teamData.value?.data);

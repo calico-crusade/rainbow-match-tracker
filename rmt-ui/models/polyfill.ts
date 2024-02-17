@@ -1,4 +1,5 @@
 import type { AsyncData } from "#app";
+import type { WritableComputedRef, Ref } from "vue";
 import type { ApiResultData, ErrorResult } from "./base";
 import { FetchError } from 'ofetch';
 
@@ -16,3 +17,5 @@ export type ClassOptions = string | string[] | undefined | null | {
 export type StyleOptions = string | string[] | undefined | null | {
     [key: string]: string | undefined | null;
 }
+
+export type RefNumber = Ref<number> | WritableComputedRef<number> | number;

@@ -139,10 +139,10 @@ export const useApiHelper = () => {
                 result: {...result},
                 msg
             })
-            return { error: msg, data: undefined };
+            return { error: msg, data: undefined, rawError: error.value };
         }
 
-        return { error: undefined, data: data.value.data };
+        return { error: undefined, data: data.value.data, rawError: error.value };
     }
 
     // function upload<T>(url: string, file: File) {

@@ -25,4 +25,11 @@ public class MatchesController(
         var matches = await _db.Match.Range(start, end ?? DateTime.UtcNow.AddDays(14));
         return DoOk(matches);
     }
+
+    [HttpPost, Route("matches/search"), ResultsIn<RainbowMatch[]>]
+    public async Task<IActionResult> Search([FromBody] MatchSearchRequest request)
+    {
+        var matches = await _db.Match.Search(request);
+        return DoOk(matches);
+    }
 }

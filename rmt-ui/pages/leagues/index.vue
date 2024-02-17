@@ -24,7 +24,6 @@
 
         <Pager
             :page="page"
-            :size="size"
             :total="total"
             :pages="pages"
             url="/leagues"
@@ -38,8 +37,7 @@ const route = useRoute();
 const { setMeta } = useUtils();
 
 const page = computed(() => +(route.query.page?.toString() ?? '1'));
-const size = computed(() => +(route.query.size?.toString() ?? '10'));
-const { data, pending, error, refresh } = await api.leagues.all(page, size);
+const { data, pending, error, refresh } = await api.leagues.all(page);
 
 const leagues = computed(() => data.value?.data.results ?? []);
 const total = computed(() => data.value?.data.count ?? 0);

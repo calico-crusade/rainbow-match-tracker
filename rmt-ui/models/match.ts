@@ -29,3 +29,10 @@ export interface ExtendedMatch  {
     league: League;
     teams: Team[];
 }
+
+export interface MatchSearch {
+    league?: string;
+    codes?: string[];
+    ids?: string[];
+    statuses?: MatchStatus[];
+}

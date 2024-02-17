@@ -79,7 +79,6 @@ const props = defineProps<{
 
 const emits = defineEmits<{
     (e: 'onscrolled'): void;
-    (e: 'headerstuck', value: boolean): void;
     (e: 'auto-scrolled'): void;
 }>();
 
@@ -87,7 +86,6 @@ const hasHeader = computed(() => !!slots['header']);
 const hasBefore = computed(() => !!slots['before']);
 const noOverflow = computed(() => isTrue(props.scrollX) || isTrue(props.scrollY));
 const actScrollWait = computed(() => (props.scrollWait ? +props.scrollWait : 500) ?? 500);
-const headerStuck = ref(false);
 
 const scroller = ref<HTMLElement>();
 const stickyheader = ref<HTMLElement>();
@@ -132,19 +130,6 @@ const actScrollToBottom = () => {
 }
 
 const scrollBottom = debounce<void>(actScrollToBottom, actScrollWait.value);
-
-onMounted(() => {
-    const observer = new IntersectionObserver(
-        ([e]) => {
-            const shouldStick = e.intersectionRatio < 1;
-            e.target.toggleAttribute('stuck', shouldStick);
-            emits('headerstuck', shouldStick);
-            headerStuck.value = shouldStick;
-        }, { threshold: 1 }
-    );
-
-    if (stickyheader.value) observer.observe(stickyheader.value);
-})
 
 watch(() => props.scrollWatcher, () => {
     if (!scroller.value) return;

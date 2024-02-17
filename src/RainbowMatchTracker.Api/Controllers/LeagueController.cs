@@ -26,6 +26,13 @@ public class LeagueController(IDbService _db) : BaseController
             : DoOk(league);
     }
 
+    [HttpGet, Route("leagues/{id}/teams"), ResultsIn<RainbowTeam[]>]
+    public async Task<IActionResult> Teams(Guid id)
+    {
+        var teams = await _db.Team.ByLeague(id);
+        return DoOk(teams);
+    }
+
     [HttpGet, Route("leagues/{id}/matches"), ResultsIn<PaginatedResult<RainbowMatch>>]
     public async Task<IActionResult> Matches(Guid id, [FromQuery] int page = 1, [FromQuery] int size = 20)
     {

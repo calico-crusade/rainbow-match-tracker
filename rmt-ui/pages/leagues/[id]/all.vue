@@ -8,7 +8,7 @@
         <template #header>
             <Image :src="league?.image" size="24px" class="center-vert margin-left" shadow />
             <h3 class="center-vert margin">{{ league?.display }} </h3>
-            <h3 class="center-vert mute">Upcoming Matches</h3>
+            <h3 class="center-vert mute">All Matches</h3>
             <IconBtn
                 icon="sync"
                 @click="refresh"
@@ -52,10 +52,12 @@
                     :link="`/leagues/${id}`"
                 />
             </div>
-
-            <div class="pager mute center-vert pad-left">
-                {{ matches.length }} Upcoming Matches
-            </div>
+            <Pager
+                :result="data"
+                :url="`/leagues/${id}/all`"
+                no-top-margin
+                class="center-vert"
+            />
         </div>
 
         <Match
@@ -65,30 +67,31 @@
             link
             hover
         />
+
+        <Pager
+            :result="data"
+            :url="`/leagues/${id}/all`"
+        />
     </Container>
 </template>
 
 <script setup lang="ts">
 const { v1: api } = useRmtApi();
-const { setMeta } = useUtils();
 const route = useRoute();
+const { setMeta } = useUtils();
 
 const id = computed(() => route.params.id?.toString());
-const { data, pending, error, refresh } = await api.leagues.matches.active(id.value);
+const page = computed(() => +(route.query.page?.toString() ?? '1'));
+const { data, pending, error, refresh } = await api.leagues.matches.all(id.value, page);
 const { data: leagueData, pending: leaguePending, error: leagueError } = await api.leagues.get(id.value);
 
 const league = computed(() => leagueData.value?.data);
 const loading = computed(() => pending.value || leaguePending.value);
 const err = computed(() => error.value ?? leagueError.value);
 
-const matches = computed(() => data.value?.data ?? []);
-const title = computed(() => `${league.value?.display ?? 'League'} - Upcoming Matches`);
+const matches = computed(() => data.value?.data.results ?? []);
+const title = computed(() => `${league.value?.display ?? 'League'} - All ${data.value?.data.count ?? ''} Matches`);
 
-setMeta(title.value, league.value?.name ?? 'Upcoming matches for the league', league.value?.image);
+setMeta(title.value, league.value?.name ?? 'All league matches', league.value?.image);
 </script>
 
-<style lang="scss" scoped>
-.fill-bg {
-    background-color: var(--bg-color-accent-dark);
-}
-</style>

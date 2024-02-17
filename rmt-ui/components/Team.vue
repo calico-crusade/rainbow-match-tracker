@@ -6,6 +6,10 @@
         :to="actLink"
         :target="isExternal(actLink) ? '_blank' : undefined"
     >
+
+        <div class="flex row center-vert margin-right" v-if="hasBefore">
+            <slot name="before" />
+        </div>
         <div class="image">
             <Image shadow v-if="data" :src="data.image" :alt="data.name" size="50px" fit="contain" />
             <Placeholder v-else size="50px" round="50%" />
@@ -19,7 +23,7 @@
             <Placeholder v-else height="103px" width="100%" round="var(--brd-radius)" />
         </div>
 
-        <div class="actions flex row center-vert">
+        <div class="actions flex row center-vert" v-if="hasAfter">
             <slot />
         </div>
     </NuxtLink>
@@ -31,6 +35,7 @@ import type { Team, booleanish, ClassOptions } from '~/models';
 const { toPromise } = useApiHelper();
 const { serClasses, isTrue, isExternal } = useUtils();
 const { v1: api } = useRmtApi();
+const slots = useSlots();
 
 const props = defineProps<{
     team?: Team,
@@ -49,6 +54,9 @@ const emit = defineEmits<{
 
 const loading = ref(false);
 const data = ref<Team>();
+
+const hasBefore = computed(() => !!slots.before);
+const hasAfter = computed(() => !!slots.default);
 
 const classes = computed(() => serClasses(props.class, {
     'margin-top': !isTrue(props.noTopMargin),

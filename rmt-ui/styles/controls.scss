@@ -148,6 +148,27 @@ input:read-only:not([type='color']):not([type='range']) {
     }
 }
 
+.fill-bg {
+    background-color: var(--bg-color-accent-dark);
+}
+
+@media only screen and (max-width: 800px) {
+    .page-container-btns {
+        flex-direction: column;
+
+        .buttons {
+            flex: 1;
+            .btn {
+                flex: 1;
+            }
+        }
+
+        .pager {
+            margin-top: var(--margin);
+            margin-right: auto;
+        }
+    }
+}
 
 @media only screen and (max-width: 650px) {
     .card .actions img { display: none; }

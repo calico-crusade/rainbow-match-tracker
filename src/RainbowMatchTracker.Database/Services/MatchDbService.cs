@@ -15,12 +15,16 @@ public interface IMatchDbService : IOrmMap<RainbowMatch>
     Task<RainbowMatch[]> Range(DateTime start, DateTime end);
 
     Task<RainbowMatch[]> ActiveByLeague(Guid leagueId);
+
+    Task<RainbowMatch[]> ByLeagueTeams(Guid? leagueId, MatchStatus[] status, Guid[] teamIds);
+
+    Task<RainbowMatch[]> Search(MatchSearchRequest search);
 }
 
 internal class MatchDbService(IOrmService _orm) : Orm<RainbowMatch>(_orm), IMatchDbService
 {
     private static string? _allMatches;
-    private static MatchStatus[] ALL_STATUS = [
+    private static readonly MatchStatus[] ALL_STATUS = [
         MatchStatus.TeamOneWon,
         MatchStatus.TeamTwoWon,
         MatchStatus.Draw,
@@ -180,5 +184,53 @@ WHERE
         var statuses = (status.Length == 0 ? ALL_STATUS : status).Select(t => (int)t).ToArray();
 
         return Paginate(QUERY, new { leagueId, statuses }, page, size);
+    }
+
+    public Task<RainbowMatch[]> ByLeagueTeams(Guid? leagueId, MatchStatus[] status, Guid[] teamIds)
+    {
+        const string QUERY = @"
+SELECT DISTINCT m.*
+FROM rainbow_match m
+JOIN rainbow_match_teams t ON t.id = m.id
+WHERE 
+    t.team_id = ANY( :teamIds ) AND 
+    (
+        :leagueId IS NULL OR
+        m.league_id = :leagueId
+    ) AND
+    m.status = ANY( :statuses )
+ORDER BY m.start_time DESC";
+
+        var statuses = (status.Length == 0 ? ALL_STATUS : status).Select(t => (int)t).ToArray();
+        return Get(QUERY, new { leagueId, statuses, teamIds });
+    }
+
+    public async Task<RainbowMatch[]> Search(MatchSearchRequest search)
+    {
+        const string QUERY = @"
+SELECT DISTINCT m.*
+FROM rainbow_match m
+JOIN rainbow_match_teams t ON t.id = m.id
+WHERE 
+    (
+        t.team_code = ANY( :codes ) OR
+        t.team_id = ANY( :ids )
+    ) AND 
+    (
+        :league IS NULL OR
+        m.league_id = :league
+    ) AND
+    m.status = ANY( :statuses )
+ORDER BY m.start_time DESC";
+
+        var ids = search.Ids ?? [];
+        var codes = search.Codes ?? [];
+        var status = search.Statuses ?? [];
+        var league = search.League;
+
+        if (ids.Length == 0 && codes.Length == 0) return [];
+
+        var statuses = (status.Length == 0 ? ALL_STATUS : status).Select(t => (int)t).ToArray();
+        return await Get(QUERY, new { ids, codes, statuses, league });
     }
 }
